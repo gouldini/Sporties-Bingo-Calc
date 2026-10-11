@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sporties Super Bingo Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: one narrow column — setup, prize list, big game, then the night's result and an odds table by call. */
+:root{
+  --bg:#f3f5f6; --surface:#ffffff; --ink:#15262b; --muted:#5b6d72; --line:#d6dee0;
+  --accent:#b8236a; --accent-soft:#f8e3ed; --good:#1d7a4d; --good-soft:#e1f2e8; --bad:#b33a2b; --bad-soft:#f9e4e0;
+  --ball:#1f5a66; --warn:#9a6200; --warn-soft:#fbefd6;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1a1d; --surface:#172529; --ink:#e6eef0; --muted:#97aaaf; --line:#2c3e43;
+  --accent:#ef6fa8; --accent-soft:#3a1d2b; --good:#5fd29a; --good-soft:#163428; --bad:#f08573; --bad-soft:#3a1f1a;
+  --ball:#5fb3c2; --warn:#f0b54d; --warn-soft:#3a2d14; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1a1d; --surface:#172529; --ink:#e6eef0; --muted:#97aaaf; --line:#2c3e43;
+  --accent:#ef6fa8; --accent-soft:#3a1d2b; --good:#5fd29a; --good-soft:#163428; --bad:#f08573; --bad-soft:#3a1f1a;
+  --ball:#5fb3c2; --warn:#f0b54d; --warn-soft:#3a2d14; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+h1{font-family:var(--display);font-weight:700;font-size:2.1rem;line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;font-size:.95rem}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--display);font-weight:600;font-size:1.25rem;text-transform:uppercase;letter-spacing:.06em;margin:0;color:var(--ball)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.field{display:flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg);overflow:hidden}
+.field span{padding:0 0 0 10px;color:var(--muted);font-weight:600}
+.field em{padding:0 10px 0 0;color:var(--muted);font-style:normal;font-size:.85rem}
+input{font:inherit;font-size:1.15rem;font-weight:600;color:var(--ink);background:transparent;border:0;padding:10px;width:100%;min-width:0;font-variant-numeric:tabular-nums}
+input:focus{outline:none}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.hint{font-size:.85rem;color:var(--muted);margin:0}
+/* games */
+.games{display:flex;flex-direction:column;gap:8px}
+.game{display:grid;grid-template-columns:44px minmax(0,1fr) 40px;align-items:center;gap:10px}
+.ballno{width:40px;height:40px;border-radius:50%;background:var(--ball);color:var(--surface);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.15rem}
+.rm{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:1.3rem;cursor:pointer}
+.rm:hover{color:var(--bad);border-color:var(--bad)}
+.addrow{display:flex;gap:10px;flex-wrap:wrap}
+button.btn{font:inherit;font-weight:600;border-radius:8px;padding:10px 14px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
+button.btn:hover{background:var(--accent-soft)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.big .ballno{background:var(--accent)}
+.glabel{flex-direction:row}.glabel .field{width:100%}
+/* results */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.row:last-child{border-bottom:0}
+.row b{font-weight:700}
+.outcomes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.oc{border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.oc small{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.oc strong{font-family:var(--display);font-size:1.6rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.oc span{font-size:.78rem;color:var(--muted)}
+.pos{background:var(--good-soft)} .pos small,.pos strong{color:var(--good)}
+.neg{background:var(--bad-soft)} .neg small,.neg strong{color:var(--bad)}
+.chance{font-family:var(--display);font-size:1.5rem;font-weight:700;color:var(--accent)}
+/* odds table */
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.95rem}
+th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--bg)}
+tr.cur{background:var(--accent-soft)!important;font-weight:700}
+tr.cur td:first-child{color:var(--accent)}
+.bar{display:inline-block;height:8px;border-radius:4px;background:var(--accent);vertical-align:middle;margin-right:6px;opacity:.7}
+.alerts{display:flex;flex-direction:column;gap:8px}
+.alert{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:8px}
+.alert i{font-style:normal;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--surface)}
+.alert b{display:block}
+.alert span{font-size:.9rem;color:var(--ink)}
+.alert.ok{background:var(--good-soft)} .alert.ok i{background:var(--good)} .alert.ok b{color:var(--good)}
+.alert.warn{background:var(--warn-soft)} .alert.warn i{background:var(--warn)} .alert.warn b{color:var(--warn)}
+.alert.stop{background:var(--bad-soft)} .alert.stop i{background:var(--bad)} .alert.stop b{color:var(--bad)}
+@media (max-width:420px){.outcomes{grid-template-columns:1fr}.oc{flex-direction:row;align-items:baseline;justify-content:space-between;flex-wrap:wrap}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Sporties Super Bingo Calculator</h1>
+    <p class="sub">Change any number and everything updates. Odds assume 90-ball bingo with 15 numbers per box.</p>
+  </header>
+
+  <section>
+    <h2>Sales</h2>
+    <div class="grid">
+      <label for="players">Players<div class="field"><input id="players" type="number" inputmode="numeric" min="0" value="30"></div></label>
+      <label for="books">Books each<div class="field"><input id="books" type="number" inputmode="numeric" min="0" value="1"></div></label>
+      <label for="price">Book price<div class="field"><span>$</span><input id="price" type="number" inputmode="decimal" min="0" step="0.5" value="25"></div></label>
+      <label for="boxes">Boxes per game<div class="field"><input id="boxes" type="number" inputmode="numeric" min="1" value="5"></div></label>
+      <label for="bookcost">Cost per book<div class="field"><span>$</span><input id="bookcost" type="number" inputmode="decimal" min="0" step="0.05" value="0.50"></div></label>
+    </div>
+  </section>
+
+  <section>
+    <h2>Dabbers</h2>
+    <div class="grid">
+      <label for="dabsold">Dabbers sold<div class="field"><input id="dabsold" type="number" inputmode="numeric" min="0" value="30"></div></label>
+      <label for="dabprice">Sell price<div class="field"><span>$</span><input id="dabprice" type="number" inputmode="decimal" min="0" step="0.5" value="10"></div></label>
+      <label for="dabcost">Cost each<div class="field"><span>$</span><input id="dabcost" type="number" inputmode="decimal" min="0" step="0.01" value="1.04"></div></label>
+    </div>
+    <div class="rows"><div class="row"><span>Dabber profit</span><b id="dabprofit">$269</b></div></div>
+  </section>
+
+  <section>
+    <h2>Game prizes</h2>
+    <div class="games" id="games"><div class="game"><div class="ballno">1</div><label for="g0" class="glabel"><span class="field"><span>$</span><input id="g0" class="gp" type="number" inputmode="decimal" min="0" value="20" aria-label="Game 1 prize"></span></label><button class="rm" type="button" aria-label="Remove game 1">×</button></div><div class="game"><div class="ballno">2</div><label for="g1" class="glabel"><span class="field"><span>$</span><input id="g1" class="gp" type="number" inputmode="decimal" min="0" value="20" aria-label="Game 2 prize"></span></label><button class="rm" type="button" aria-label="Remove game 2">×</button></div><div class="game"><div class="ballno">3</div><label for="g2" class="glabel"><span class="field"><span>$</span><input id="g2" class="gp" type="number" inputmode="decimal" min="0" value="20" aria-label="Game 3 prize"></span></label><button class="rm" type="button" aria-label="Remove game 3">×</button></div><div class="game"><div class="ballno">4</div><label for="g3" class="glabel"><span class="field"><span>$</span><input id="g3" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 4 prize"></span></label><button class="rm" type="button" aria-label="Remove game 4">×</button></div><div class="game"><div class="ballno">5</div><label for="g4" class="glabel"><span class="field"><span>$</span><input id="g4" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 5 prize"></span></label><button class="rm" type="button" aria-label="Remove game 5">×</button></div><div class="game"><div class="ballno">6</div><label for="g5" class="glabel"><span class="field"><span>$</span><input id="g5" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 6 prize"></span></label><button class="rm" type="button" aria-label="Remove game 6">×</button></div><div class="game"><div class="ballno">7</div><label for="g6" class="glabel"><span class="field"><span>$</span><input id="g6" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 7 prize"></span></label><button class="rm" type="button" aria-label="Remove game 7">×</button></div><div class="game"><div class="ballno">8</div><label for="g7" class="glabel"><span class="field"><span>$</span><input id="g7" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 8 prize"></span></label><button class="rm" type="button" aria-label="Remove game 8">×</button></div><div class="game"><div class="ballno">9</div><label for="g8" class="glabel"><span class="field"><span>$</span><input id="g8" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 9 prize"></span></label><button class="rm" type="button" aria-label="Remove game 9">×</button></div><div class="game"><div class="ballno">10</div><label for="g9" class="glabel"><span class="field"><span>$</span><input id="g9" class="gp" type="number" inputmode="decimal" min="0" value="25" aria-label="Game 10 prize"></span></label><button class="rm" type="button" aria-label="Remove game 10">×</button></div><div class="game"><div class="ballno">11</div><label for="g10" class="glabel"><span class="field"><span>$</span><input id="g10" class="gp" type="number" inputmode="decimal" min="0" value="30" aria-label="Game 11 prize"></span></label><button class="rm" type="button" aria-label="Remove game 11">×</button></div><div class="game"><div class="ballno">12</div><label for="g11" class="glabel"><span class="field"><span>$</span><input id="g11" class="gp" type="number" inputmode="decimal" min="0" value="30" aria-label="Game 12 prize"></span></label><button class="rm" type="button" aria-label="Remove game 12">×</button></div><div class="game"><div class="ballno">13</div><label for="g12" class="glabel"><span class="field"><span>$</span><input id="g12" class="gp" type="number" inputmode="decimal" min="0" value="35" aria-label="Game 13 prize"></span></label><button class="rm" type="button" aria-label="Remove game 13">×</button></div><div class="game"><div class="ballno">14</div><label for="g13" class="glabel"><span class="field"><span>$</span><input id="g13" class="gp" type="number" inputmode="decimal" min="0" value="35" aria-label="Game 14 prize"></span></label><button class="rm" type="button" aria-label="Remove game 14">×</button></div></div>
+    <div class="addrow"><button class="btn" id="add" type="button">+ Add game</button></div>
+  </section>
+
+  <section class="big">
+    <h2>Big game</h2>
+    <div class="game"><div class="ballno" id="bigno">15</div><p class="hint">Full house wins the big prize if it comes within the call limit. Otherwise the first full house after that wins the fallback prize.</p><div></div></div>
+    <div class="grid">
+      <label for="bigprize">Big prize<div class="field"><span>$</span><input id="bigprize" type="number" inputmode="decimal" min="0" value="1000"></div></label>
+      <label for="limit">Within<div class="field"><input id="limit" type="number" inputmode="numeric" min="15" max="90" value="55"><em>calls</em></div></label>
+      <label for="fallback">Fallback prize<div class="field"><span>$</span><input id="fallback" type="number" inputmode="decimal" min="0" value="100"></div></label>
+    </div>
+    <div class="rows">
+      <div class="row"><span>Boxes in play</span><b id="inplay">150</b></div>
+      <div class="row"><span>Chance big prize goes off</span><span class="chance" id="chance">3.8%  (1 in 26)</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>NT rule checks</h2>
+    <div class="alerts" id="alerts"><div class="alert ok"><i>✓</i><div><b>No permit needed</b><span>Book sales of $750 are within the $5,000 limit ($4,250 to spare).</span></div></div><div class="alert ok"><i>✓</i><div><b>Prizes meet the one-third rule</b><span>Even without the big prize you pay $465, above the $250 minimum.</span></div></div></div>
+    <p class="hint">Based on Licensing NT conditions for approved associations. Dabber sales are not counted as entry fees here. Confirm with Licensing NT if you are close to a limit.</p>
+  </section>
+
+  <section>
+    <h2>The night</h2>
+    <div class="rows">
+      <div class="row"><span>Book sales</span><b id="sales">$750</b></div>
+      <div class="row"><span>Book printing cost</span><b id="bookcosts">−$15</b></div>
+      <div class="row"><span>Dabber profit</span><b id="dabprofit2">$269</b></div>
+      <div class="row"><span>Game prizes (<span id="ngames">14</span> games)</span><b id="gprizes">$365</b></div>
+      <div class="row"><span>Big game, fallback paid</span><b id="bigbest">$100</b></div>
+      <div class="row"><span>Big game, big prize paid</span><b id="bigworst">$1,000</b></div>
+    </div>
+    <div class="outcomes">
+      <div class="oc pos" id="oc1"><small>Big prize not won</small><strong id="best">$539</strong><span id="bestp">96% chance</span></div>
+      <div class="oc pos" id="oc2"><small>Average outcome</small><strong id="avg">$504</strong><span>over many nights</span></div>
+      <div class="oc neg" id="oc3"><small>Big prize won</small><strong id="worst">−$361</strong><span id="worstp">3.8% chance</span></div>
+    </div>
+    <p class="hint" id="breakeven">To cover everything even if the big prize goes off, you need 45 players. With only the fallback paid, you need 9. (Counts the dabber sales entered above.)</p>
+  </section>
+
+  <section>
+    <h2>Big game odds by call limit</h2>
+    <p class="hint">Tap a row to use that call limit. Based on the boxes in play above.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Calls</th><th>Chance</th><th>About 1 in</th><th>Average night</th></tr></thead>
+        <tbody id="odds"><tr><td>47</td><td><span class="bar" style="width:2px"></span>0.2%</td><td>407</td><td>$537</td></tr><tr><td>48</td><td><span class="bar" style="width:2px"></span>0.4%</td><td>280</td><td>$536</td></tr><tr><td>49</td><td><span class="bar" style="width:2px"></span>0.5%</td><td>194</td><td>$534</td></tr><tr><td>50</td><td><span class="bar" style="width:2px"></span>0.7%</td><td>136</td><td>$532</td></tr><tr><td>51</td><td><span class="bar" style="width:2px"></span>1.0%</td><td>96</td><td>$529</td></tr><tr><td>52</td><td><span class="bar" style="width:2px"></span>1.5%</td><td>69</td><td>$526</td></tr><tr><td>53</td><td><span class="bar" style="width:2px"></span>2.0%</td><td>49</td><td>$521</td></tr><tr><td>54</td><td><span class="bar" style="width:2px"></span>2.8%</td><td>36</td><td>$514</td></tr><tr class="cur"><td>55</td><td><span class="bar" style="width:2px"></span>3.8%</td><td>26</td><td>$504</td></tr><tr><td>56</td><td><span class="bar" style="width:2px"></span>5.2%</td><td>19</td><td>$492</td></tr><tr><td>57</td><td><span class="bar" style="width:3px"></span>7.0%</td><td>14</td><td>$476</td></tr><tr><td>58</td><td><span class="bar" style="width:4px"></span>9.3%</td><td>11</td><td>$455</td></tr><tr><td>59</td><td><span class="bar" style="width:5px"></span>12%</td><td>8</td><td>$429</td></tr><tr><td>60</td><td><span class="bar" style="width:6px"></span>16%</td><td>6</td><td>$395</td></tr><tr><td>61</td><td><span class="bar" style="width:8px"></span>21%</td><td>5</td><td>$353</td></tr><tr><td>62</td><td><span class="bar" style="width:11px"></span>26%</td><td>4</td><td>$302</td></tr><tr><td>63</td><td><span class="bar" style="width:13px"></span>33%</td><td>3</td><td>$242</td></tr><tr><td>64</td><td><span class="bar" style="width:16px"></span>41%</td><td>2</td><td>$172</td></tr><tr><td>65</td><td><span class="bar" style="width:20px"></span>49%</td><td>2</td><td>$94</td></tr><tr><td>66</td><td><span class="bar" style="width:23px"></span>59%</td><td>2</td><td>$12</td></tr><tr><td>67</td><td><span class="bar" style="width:27px"></span>68%</td><td>1</td><td>−$72</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  const DEFAULT=[20,20,20,25,25,25,25,25,25,25,30,30,35,35];
+  const KEY='bingo-calc-v1';
+  const $=id=>document.getElementById(id);
+  const ids=['players','books','price','boxes','bookcost','dabsold','dabprice','dabcost','bigprize','limit','fallback'];
+  let prizes=DEFAULT.slice(), saved=false;
+
+  try{const s=JSON.parse(localStorage.getItem(KEY)||'null');
+    if(s){ids.forEach(k=>{if(s[k]!=null)$(k).value=s[k]});if(Array.isArray(s.prizes)&&s.prizes.length){prizes=s.prizes;saved=true;}}}catch(e){}
+
+  const num=id=>{const v=parseFloat($(id).value);return isFinite(v)&&v>0?v:0};
+  const money=v=>(v<0?'−$':'$')+Math.abs(Math.round(v)).toLocaleString('en-AU');
+  const pct=p=>p<0.001?(p*100).toFixed(2)+'%':p<0.1?(p*100).toFixed(1)+'%':Math.round(p*100)+'%';
+
+  function boxP(n){ if(n<15) return 0; if(n>=90) return 1; let p=1; for(let i=0;i<15;i++) p*=(n-i)/(90-i); return p; }
+  function anyP(n,B){ return B<=0?0:1-Math.pow(1-boxP(n),B); }
+
+  const rowHTML=(i,v)=>'<div class="ballno">'+(i+1)+'</div><label for="g'+i+'" class="glabel"><span class="field"><span>$</span><input id="g'+i+'" class="gp" type="number" inputmode="decimal" min="0" value="'+v+'" aria-label="Game '+(i+1)+' prize"></span></label><button class="rm" type="button" aria-label="Remove game '+(i+1)+'">×</button>';
+  function renderGames(){
+    const g=$('games'); g.innerHTML='';
+    prizes.forEach((v,i)=>{const d=document.createElement('div');d.className='game';d.innerHTML=rowHTML(i,v);g.appendChild(d);});
+    $('bigno').textContent=prizes.length+1;
+  }
+  function readGames(){ prizes=Array.prototype.map.call(document.querySelectorAll('#games .gp'),el=>parseFloat(el.value)||0); }
+  function setOc(el,v){el.className='oc '+(v>=0?'pos':'neg')}
+
+  function calc(){
+    const players=num('players'),books=num('books'),price=num('price'),boxes=num('boxes');
+    const big=num('bigprize'),fb=num('fallback');
+    let limit=Math.round(num('limit'))||15; limit=Math.min(90,Math.max(15,limit));
+    const B=Math.round(players*books*boxes);
+    const sales=players*books*price;
+    const gp=prizes.reduce((a,b)=>a+(b||0),0);
+    const p=anyP(limit,B);
+    const bookcosts=players*books*num('bookcost');
+    const dab=num('dabsold')*(num('dabprice')-num('dabcost'));
+    const base=sales-bookcosts+dab-gp;
+    const best=base-fb, worst=base-big, avg=base-(p*big+(1-p)*fb);
+    $('bookcosts').textContent=money(-bookcosts);
+    $('dabprofit').textContent=money(dab); $('dabprofit2').textContent=money(dab);
+
+    $('inplay').textContent=B.toLocaleString('en-AU');
+    $('chance').textContent=B?pct(p)+(p>0&&p<1?'  (1 in '+Math.round(1/p).toLocaleString('en-AU')+')':''):'–';
+    $('sales').textContent=money(sales);
+    $('ngames').textContent=prizes.length;
+    $('gprizes').textContent=money(gp);
+    $('bigbest').textContent=money(fb);
+    $('bigworst').textContent=money(big);
+    $('best').textContent=money(best); $('bestp').textContent=pct(1-p)+' chance';
+    $('avg').textContent=money(avg);
+    $('worst').textContent=money(worst); $('worstp').textContent=pct(p)+' chance';
+    setOc($('oc1'),best);setOc($('oc2'),avg);setOc($('oc3'),worst);
+
+    // NT rule checks
+    const al=[];
+    const add=(cls,icon,t,d)=>al.push('<div class="alert '+cls+'"><i>'+icon+'</i><div><b>'+t+'</b><span>'+d+'</span></div></div>');
+    if(sales>20000) add('stop','!','Major lottery permit needed','Book sales of '+money(sales)+' are over $20,000. Apply to Licensing NT for a major permit before the night.');
+    else if(sales>5000) add('stop','!','Minor lottery permit needed','Book sales of '+money(sales)+' are over the $5,000 no-permit limit. Apply to Licensing NT for a minor permit, or reduce books or price.');
+    else if(sales>=4500) add('warn','!','Close to the $5,000 limit','Book sales of '+money(sales)+'. Only '+money(5000-sales)+' to go before you need a permit. At $'+(books*price||0)+' per player that is about '+Math.floor((5000-sales)/(books*price||1))+' more players.');
+    else add('ok','✓','No permit needed','Book sales of '+money(sales)+' are within the $5,000 limit ('+money(5000-sales)+' to spare).');
+    const minPrize=sales/3, lowest=gp+fb;
+    if(lowest<minPrize) add('stop','!','Prizes below one-third of sales','If the big prize isn\'t won you pay '+money(lowest)+' in prizes, but the minimum is '+money(Math.ceil(minPrize))+'. Raise prizes by at least '+money(Math.ceil(minPrize-lowest))+'.');
+    else add('ok','✓','Prizes meet the one-third rule','Even without the big prize you pay '+money(lowest)+', above the '+money(Math.ceil(minPrize))+' minimum.');
+    $('alerts').innerHTML=al.join('');
+
+    const per=books*(price-num('bookcost'));
+    const need=c=>Math.max(0,Math.ceil((c-dab)/per));
+    $('breakeven').textContent=per>0
+      ? 'To cover everything even if the big prize goes off, you need '+need(gp+big)+' players. With only the fallback paid, you need '+need(gp+fb)+'. (Counts the dabber sales entered above.)'
+      : 'Enter a book price above the book cost to see how many players you need.';
+
+    const tb=$('odds'); tb.innerHTML='';
+    const lo=Math.max(15,Math.min(limit-8,82)), hi=Math.min(90,lo+20);
+    for(let n=lo;n<=hi;n++){
+      const q=anyP(n,B), tr=document.createElement('tr');
+      if(n===limit) tr.className='cur';
+      tr.innerHTML='<td>'+n+'</td><td><span class="bar" style="width:'+Math.max(2,Math.round(q*40))+'px"></span>'+pct(q)+'</td><td>'+(q>0&&q<0.995?Math.round(1/q).toLocaleString('en-AU'):q>=0.995?'almost certain':'–')+'</td><td>'+money(base-(q*big+(1-q)*fb))+'</td>';
+      tr.addEventListener('click',()=>{$('limit').value=n;calc()});
+      tb.appendChild(tr);
+    }
+
+    try{const s={prizes};ids.forEach(k=>s[k]=$(k).value);localStorage.setItem(KEY,JSON.stringify(s))}catch(e){}
+  }
+
+  ids.forEach(k=>$(k).addEventListener('input',calc));
+  const games=$('games');
+  games.addEventListener('input',e=>{if(e.target.classList.contains('gp')){readGames();calc();}});
+  games.addEventListener('click',e=>{const b=e.target.closest('.rm');if(!b)return;const rows=[].slice.call(games.children);const i=rows.indexOf(b.closest('.game'));if(i>-1){readGames();prizes.splice(i,1);renderGames();calc();}});
+  $('add').addEventListener('click',()=>{readGames();prizes.push(prizes.length?prizes[prizes.length-1]:20);renderGames();calc();});
+  if(saved) renderGames(); else { if(!games.querySelector('.gp')) renderGames(); else readGames(); }
+  calc();
+})();
+</script>
+</body>
+</html>
